@@ -33,15 +33,6 @@ RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
 # Create a working directory
 RUN mkdir -p /app/code
 
-# Create a non-root user and switch to it
-RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
- && chown -R user:user /app
-RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-user
-
-# All users can use /home/user as their home directory
-ENV HOME=/home/user
-# RUN chmod 777 /home/user
-
 # Install other python dependencies
 RUN pip install ipython jupyter ipywidgets
 RUN if [ "x${USE_MIRROR}" = "xtrue" ] ; then \
@@ -74,7 +65,6 @@ RUN cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_confi
 
 # Setup root and user login
 RUN echo 'root:screencast' | chpasswd
-RUN echo 'user:user' | chpasswd
 RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 RUN sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/g' /etc/ssh/sshd_config
 
@@ -95,6 +85,7 @@ RUN locale-gen en_US.UTF-8
 RUN pip install git+https://github.com/ZhouYanzhao/Nest.git
 
 # note that data will be saved under your current path
+RUN pip install visdom>=0.1.8.3
 RUN nest module install -y github@ZhouYanzhao/PRM:pytorch prm
 # verify the installation
 RUN nest module list --filter prm
@@ -102,6 +93,8 @@ RUN nest module list --filter prm
 # install Nest's build-in Pytorch modules
 RUN nest module install -y github@ZhouYanzhao/Nest:pytorch pytorch
 
+RUN mkdir /app/PRM-pytorch/demo/datasets
+
 # Set the default command to python3
-WORKDIR /app/code
+WORKDIR /app/PRM-pytorch
 ENTRYPOINT ["/app/code/entrypoint.sh"]
